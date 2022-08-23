@@ -20,22 +20,22 @@ Import your data by replacing "https://docs.google.com/myspreadhseet" with the a
 You may be prompted to log in to your UC Berkeley account
 ```{r readdat}
 mysheet<-"https://docs.google.com/spreadsheets/d/1hxgHexndeOuiQKPYr9OFIluTmtNi0Zrwiu0noeopf88/edit?usp=sharing"
-dat<-read_sheet(mysheet)
 ```
 
 
 ####PART 1: ONLY RUN IF YOU USED FREQUENCY SAMPLING####
 Replace "condition 1" and "condition 2" below with the names of the columns in your data table
 ```{r name frequency}
-colnames(dat)<-c("behavior", "condition 1", "condition 2")
+datf<-read_sheet(mysheet)
+colnames(datf)<-c("behavior", "condition 1", "condition 2")
 ```
 
 We'll keep things simple for the first lab. The output of the plot function below is the only thing you need to turn in with the lab assignment.
 ```{r plot frequency}
-p1<-ggplot(data=dat %>% pivot_longer(-behavior), aes(x=behavior, y=value)) +
+pf<-ggplot(data=datf %>% pivot_longer(-behavior), aes(x=behavior, y=value)) +
  geom_col(aes(fill=name), position="dodge")
 
-p1
+pf
 ```
 When you visually inspect the graph, do you see any differences between the two conditions (or individuals) you tested?
 
@@ -60,18 +60,10 @@ colnames(dati)<-c("condition", "behavior1", "behavior2", "behavior3", "behavior4
 
 
 ```{r plot interval}
-ggplot(data=dati %>% pivot_longer(cols = 2:ncol(dati), names_to="behavior"), aes(x=behavior, y=value)) +
+pi<-ggplot(data=dati %>% pivot_longer(cols = 2:ncol(dati), names_to="behavior"), aes(x=behavior, y=value)) +
  geom_col(aes(fill=condition), position="dodge")
+
+pi
 ```
 
-###PART 3: DESCRIPTIVE STATISTICS###
-Descriptive statistics allow us to summarize our data using measures of central tendency (mean, median, and mode) and measures of variability (standard deviation, variance, kurtosis)
 
-For this lab, we will calculate two of the most commonly used descriptive statistics, the mean and standard deviation of each sample.
-
-Let's look at the mean and standard deviation of occurrences in each functional category that you assigned to your behaviors
-
-```{r}
-exploratory_behavior<-("walking", "flying")
-
-```
