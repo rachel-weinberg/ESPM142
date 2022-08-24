@@ -56,11 +56,12 @@ dati<-dati[,2:ncol(dati)] #this removes the column with time points. In this lab
 Replace "behavior1", etc. with the names of the behaviors  in your study. Add or remove entries as needed so that you have the correct number. If you add an entry, make sure it is in quotes and separated from the other entries with a comma.
 ```{r name interval}
 colnames(dati)<-c("condition", "behavior1", "behavior2", "behavior3", "behavior4")
+
 ```
 
 
 ```{r plot interval}
-pi<-ggplot(data=dati %>% pivot_longer(cols = 2:ncol(dati), names_to="behavior"), aes(x=behavior, y=value)) +
+pi<-ggplot(data=dati %>% pivot_longer(cols = 2:ncol(dati), names_to="behavior") %>% group_by(condition, behavior) %>% summarise(count=sum(value)), aes(x=behavior, y=count)) +
  geom_col(aes(fill=condition), position="dodge")
 
 pi
