@@ -1,0 +1,75 @@
+---
+title: "L2_pollinatorObs"
+author: "Weinberg"
+date: "2022-08-13"
+output: html_document
+---
+
+Run this whole chunk to load the libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+library(ggplot2)
+```
+
+Step 1. Import the data
+Make sure the spreadsheet has only one tab with your data (do not copy the entire example spreadsheet) 
+Import your data by replacing "https://docs.google.com/myspreadhseet" with the actual sharing link to your data sheet
+You may be prompted to log in to your UC Berkeley account
+```{r import data}
+mysheet<-"https://docs.google.com/spreadsheets/d/1adUTVL6FzOy2gsvq-oyT3eOYaFmoh6MyS8ZBupLspiU/edit#gid=0"
+dat<-read_sheet(mysheet)
+```
+Take a look at the sheet to make sure it is correct and matches your group's data!
+```{r}
+View(dat)
+```
+
+Next, replace "insect1" "insect2", etc. with the name of each insect in your data set EXACTLY as it is written in the column name and EXACTLY in the order that they appear on the data table. Any inconsistencies will cause the code to not work.
+
+Make sure these match to exactly what is in your data table and that each insect name is in its own set of quotation marks (properly quoted names will show up in green).
+
+You can add or remove entries as needed, just make sure each entry is separated with a comma and the whole list is enclosed in parentheses (you may want to refer to the )
+```{r}
+myinsects<-c("insect1", "insect2", "insect3", "insect4", "insect5") #edit this line
+
+colnames(dat)<-c("flower", "behavior", myinsects)
+```
+
+
+We will start by plotting out each of the three behaviors (landing, inspecting, and feeding) to see if there are overall differences in the behaviors exhibited by each insect, regardless of flower
+```{r}
+datl<-dat %>% pivot_longer(cols=myinsects, names_to ="insect")
+
+pb<-ggplot(data=datl, aes(x=behavior, y=value))+
+  geom_col(aes(fill=insect))+
+  ylab("count") + ggtitle("Observed behaviors by insect pollinators")
+
+pb
+```
+Now we will look at the total number of insects visiting each flower. We can just use the "landing" column to plot all the flower visits
+```{r}
+landing_only<-subset(datl, behavior=="landing")
+landing_only<-landing_only[,-2]
+
+pl<-ggplot(data=landing_only, aes(x=flower, y=value))+
+  geom_col(aes(fill=insect)) +
+  ylab("landings") +ggtitle("Insect landings observed on each flower type")
+
+pl
+```
+
+
+
+
+###PART 2: Statistical tests###
+###CAN SKIP IN LAB 2, MORE TESTS WILL BE ADDED FOR LAB 3###
+Next we will use a chi-square test to determine if there was a significant difference between the observed landing rates of each insect on each flower and the expected rates (assuming insects had no preference)
+```{r by flower}
+lt<-landing_only %>% pivot_wider(names_from=insect)
+chisq<-chisq.test(x=lt[,2:ncol(lt)], y=lt$flower)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
