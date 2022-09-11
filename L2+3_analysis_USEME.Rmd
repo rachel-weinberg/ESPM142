@@ -1,0 +1,200 @@
+---
+title: "L2_pollinatorObs"
+author: "Weinberg"
+date: "2022-08-13"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+#Box 0.
+Run this whole chunk to load the libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+library(ggplot2)
+```
+###PART 1. Observations on real flowers###
+
+# Box 1. Import the data
+Make sure the spreadsheet has only one tab with your data (do not copy the entire example spreadsheet) 
+Import your data by replacing "https://docs.google.com/myspreadhseet" with the actual sharing link to your data sheet
+You may be prompted to log in to your UC Berkeley account
+```{r import data}
+mysheet1<-"https://docs.google.com/spreadsheets/d/1adUTVL6FzOy2gsvq-oyT3eOYaFmoh6MyS8ZBupLspiU/edit#gid=0"
+dat.obs<-read_sheet(mysheet1)
+```
+#Box 2. check the data
+Take a look at the sheet to make sure it is correct and matches your group's data!
+```{r}
+dat.obs
+```
+
+
+#Box 3. Organize the data
+Next, replace "insect1" "insect2", etc. with the name of each insect in your data set EXACTLY as it is written in the column name and EXACTLY in the order that they appear on the data table. Any inconsistencies will cause the code to not work.
+
+Make sure these match to exactly what is in your data table and that each insect name is in its own set of quotation marks (properly quoted names will show up in green).
+
+You can add or remove entries as needed, just make sure each entry is separated with a comma and the whole list is enclosed in parentheses (you may want to refer to the )
+```{r}
+myinsects<-c("insect1", "insect2", "insect3", "insect4", "insect5", "insect6") #edit this line
+
+colnames(dat.obs)<-c("flower", "behavior", myinsects)
+```
+
+
+#Box 4. Plot behavioral observations
+We will start by plotting out each of the three behaviors (landing, inspecting, and feeding) to see if there are overall differences in the behaviors exhibited by each insect, regardless of flower
+```{r}
+datl<-dat.obs %>% pivot_longer(cols=myinsects, names_to ="insect")
+
+pb<-ggplot(data=datl, aes(x=behavior, y=value))+
+  geom_col(aes(fill=insect))+
+  ylab("count") + ggtitle("Observed behaviors by insect pollinators")
+
+pb
+```
+#Box 5. Plot landings by flower
+Now we will look at the total number of insects visiting each flower. We can just use the "landing" column to plot all the flower visits
+```{r}
+landing_only<-subset(datl, behavior=="landing")
+landing_only<-landing_only[,-2]
+
+pl<-ggplot(data=landing_only, aes(x=flower, y=value))+
+  geom_col(aes(fill=insect)) +
+  ylab("landings") +ggtitle("Insect landings observed on each flower type")
+
+pl
+```
+
+
+
+###PART 2: LAB 3 ANALYSIS###
+
+#Box 1A. Import the data
+1. replace the link next to "target.sheet" with the link for the data sheet with the class data for your target insect
+2. replace the link next to "broad.sheet" with the link to your group's data for insect landings on your flower built to attract a broad range of insects
+```{r}
+target.sheet<-"https://docs.google.com/spreadsheets/d/1Fdhp2GB2ZhvDEQkvNqKN7Xd935bmsPxLHAkJmI4wSb4/edit?usp=sharing"
+
+broad.sheet<-"https://docs.google.com/spreadsheets/d/1NvzMWPtAtPiq9PthJpRA8gxDkfr1X8n5VvLTVjU_XgA/edit?usp=sharing"
+
+datt<-read_sheet(target.sheet) #read in data from target flower
+
+datb<-read_sheet(broad.sheet) #read in data from broad range flower
+```
+
+#Box 2A. Organize the data
+First we have to get our data tables in the right format. The names of the columns in your broad range data sheet from lab 3 should exactly match the names of the columns in your observations from lab 2. If they don't, you will need to re-categorize or edit the names so they do match.
+
+You can use whatever categories you like for the broad range flower. For your targeted flower, you must use the categories provided on the class data sheet (do not change the column names)
+
+This chunk of code re-uses the column names you wrote in "Box 3. Organize the data" in the Lab 2 section. If you need to edit the names, do so in Box 3 (line 39 of this notebook). Make sure to re-run that chunk of code after making any changes to update the names.
+```{r}
+colnames(datb)<-c("site", "behavior", myinsects)
+```
+
+#Box 3A. Plot behavioral observations
+```{r}
+datlb<-datb %>% pivot_longer(cols=myinsects, names_to ="insect")
+
+pb<-ggplot(data=datlb, aes(x=behavior, y=value))+
+  geom_col(aes(fill=insect))+
+  ylab("count") + ggtitle("All observed behaviors on artificial flower")
+pb
+```
+
+
+
+###Part 2A: Statistics###
+
+#Box 4a. Descriptive statistics for broad-range flowers
+Since we have observations for four different sites, we can calculate some descriptive statistics to learn more about overall trends in the data.
+The following chunk of code will return several statistics, but in your lab report you only need to include (1) the mean number of landings per site and (2) the mean number of times each insect performed each behavior. 
+It is still a good idea to look through the other values and think about what they mean as you interpret your results.
+```{r}
+sum_lps<-datlb %>% filter(behavior=="landing") %>% group_by(site) %>% summarise(mean=mean(value), stdev=sd(value))
+
+sum_behavior<-datlb %>% group_by(behavior) %>% summarise(mean=mean(value), stdev=sd(value))
+
+```
+
+#Box 5A. t-tests to compare behaviors by flower type
+The first several lines are just putting the data for your broad range flower and your observed flowers together in the same format. 
+The last lines run three t-tests, one for each of the behavior types.
+
+In the results section of your lab report, include the mean of each behavior observed by flower type (in all the tables below, x represents the artificial flower and y represents the real flowers) and the p-value for each comparison.
+Remember, results are usually considered "significantly different" if the p-value is less than 0.05
+```{r}
+#formatting lines
+dat_comb<-data.frame(flower=c(rep("artificial", nrow(datlb)), rep("real", nrow(datl))), site.type=c(datlb$site,datl$flower), behavior=c(datlb$behavior, datl$behavior), insect=c(datlb$insect, datl$insect), count=c(datlb$value, datl$value))
+datcw<-pivot_wider(dat_comb, names_from = behavior, values_from = count)
+artificial<-datcw %>% filter(flower=="artificial")
+real<-datcw %>% filter(flower=="real")
+
+
+test.landing<-t.test(x=artificial$landing, y=real$landing)
+test.inspecting<-t.test(x=artificial$inspecting, y=real$inspecting)
+test.feeding<-t.test(x=artificial$feeding, y=real$feeding)
+
+test.landing
+test.inspecting
+test.feeding
+```
+#Box 6A. Plotting behaviors
+Next we will make a plot to visualize the occurrence of each behavior on each flower type 
+```{r}
+pra<-ggplot(data=dat_comb, aes(x=flower, y=count, fill=behavior))+ geom_boxplot()+
+  ggtitle("Insect behaviors on real and artificial flowers")
+
+pra
+```
+#Box 6B. Plotting insect landings on the target flowers
+This plot will allow you to visualize the types of insects that landed on your flower designed for your target insect.
+```{r}
+dattl<-pivot_longer(datt, cols=colnames(datt[5:ncol(datt)]), names_to = "insect")
+
+pti<-ggplot(data=dattl, aes(x=insect, y=value, fill=insect))+
+  geom_boxplot()
+pti
+```
+
+
+#Box 7A. Statistical tests for targeted flowers
+
+Next we will use another t-test to determine if there was a significant difference between the observed landing rates of your target insect on the flower designed specifically for that insect and on the flower designed to attract a broad range of insects.
+
+In order for this to work, the name of your target insect must match exactly on the data sheet for the broad range flower and your target flower (it doesn't matter if the names of the other insect types match).
+Replace "my_insect" below with the name of your target insect as it appears on both sheets. Make sure it stays in quotation marks!
+
+The result will look similar to the t-tests you ran in box 5A (and can be interpreted the same way). In this case, x is your targeted artificial flower and y is your broad artificial flower.
+
+In your lab report, include the p-values and means of the t-tests for landing, inspecting, and feeding behavior on each flower (note that they appear in this order).
+```{r}
+target<-"my_insect"
+tf_target<-datt %>% pivot_longer(cols=colnames(datt[5:ncol(datt)]), names_to ="insect") %>% filter(insect==target) %>% pivot_wider(names_from = behavior)
+
+br_target<-datlb %>% filter(insect==target) %>% pivot_wider(names_from = behavior)
+
+tvb_test_landing<-t.test(x=tf_target$landing, y=br_target$landing)
+tvb_test_inspecting<-t.test(x=tf_target$inspecting, y=br_target$inspecting)
+tvb_test_feeding<-t.test(x=tf_target$feeding, y=br_target$feeding)
+tvb_test_landing
+tvb_test_inspecting
+tvb_test_feeding
+```
+
+#Box 8A. Plotting insect behavior on targeted and untargeted flowers
+Almost done! Now let's make a boxplot comparing each behavior for our target insect on the targeted and untargeted flower
+```{r}
+tbf<-data.frame(flower=c(rep("broad", nrow(br_target)), rep("target", nrow(tf_target))), landing=c(br_target$landing, tf_target$landing), inspecting=c(br_target$inspecting, tf_target$inspecting), feeding=c(br_target$feeding, tf_target$feeding))
+
+
+ptb<-ggplot(data=tbf %>% pivot_longer(cols=c(landing, inspecting, feeding), names_to = "behavior"), aes(x=flower, y=value, fill=behavior))+ geom_boxplot()+
+  ggtitle("Target insect visits to each artificial flower") +
+  ylab("count")
+
+ptb
+```
