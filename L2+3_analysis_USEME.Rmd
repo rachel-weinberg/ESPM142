@@ -74,7 +74,7 @@ pl
 ###PART 2: LAB 3 ANALYSIS###
 
 #Box 1A. Import the data
-1. replace the link next to "target.sheet" with the link for the data sheet with the class data for your target insect
+1. replace the link next to "target.sheet" with the link for the data sheet with your group's data for your target insect
 2. replace the link next to "broad.sheet" with the link to your group's data for insect landings on your flower built to attract a broad range of insects
 ```{r}
 target.sheet<-"https://docs.google.com/spreadsheets/d/1Fdhp2GB2ZhvDEQkvNqKN7Xd935bmsPxLHAkJmI4wSb4/edit?usp=sharing"
