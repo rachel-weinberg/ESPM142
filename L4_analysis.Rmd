@@ -18,7 +18,7 @@ library(ggplot2)
 #Box 1. Import the data
 This is a link to the class data. Do NOT change the link.
 ```{r}
-mysheet<-"https://docs.google.com/spreadsheets/d/1E1gAn1qhgEJfd48YiKrrDu657vRWFZ1MTO59ccMCCj8/edit?usp=sharing"
+mysheet<-"https://docs.google.com/spreadsheets/d/1reC0m_6hRsa9UCoGNrBf1JAzeWMrdBGBflWBr5gkD38/edit?usp=sharing"
 pt1<-read_sheet(mysheet, sheet="Part 1")
 pt2<-read_sheet(mysheet, sheet="Part 2")
 pt3<-read_sheet(mysheet, sheet="Part 3")
@@ -161,3 +161,10 @@ geotest<-t.test(x=perc_by_angle %>% filter(angle==60), y=perc_by_angle %>% filte
 geotest
 ```
 
+#Box 11. Plot the percentage of ants taking the correct turn by angle
+```{r}
+plot_perc<-ggplot(data=perc_by_angle, aes(x=angle, y=perc_correct, group=angle, fill=angle))+
+  geom_boxplot() +theme(legend.position = "none")
+
+plot_perc
+```
