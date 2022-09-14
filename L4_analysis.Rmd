@@ -1,0 +1,163 @@
+---
+title: "L4_analysis"
+author: "Weinberg"
+date: "2022-09-13"
+output: html_document
+---
+
+
+#Box 0. Run to load the libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+library(ggplot2)
+```
+
+
+#Box 1. Import the data
+This is a link to the class data. Do NOT change the link.
+```{r}
+mysheet<-"https://docs.google.com/spreadsheets/d/1E1gAn1qhgEJfd48YiKrrDu657vRWFZ1MTO59ccMCCj8/edit?usp=sharing"
+pt1<-read_sheet(mysheet, sheet="Part 1")
+pt2<-read_sheet(mysheet, sheet="Part 2")
+pt3<-read_sheet(mysheet, sheet="Part 3")
+
+conditions1<-c("unmarked.no.visual", "marked.no.visual", "unmarked.visual", "marked.visual")
+colnames(pt1)<-c("nest", conditions1)
+
+conditions2<-c("unmarked.chemical.only", "marked.chemical.only", "unmarked.visual.only", "marked.visual.only")
+colnames(pt2)<-c("nest",conditions2)
+
+
+colnames(pt3)<-c("nest", "angle", "to_nest", "to_platform")
+```
+
+
+###PART 1###
+
+#Box 2. Visualize data from part 1
+First plot the number of marked ants (those that had the opportunity to learn a visual cue) crossing over to platform #1 (no cue) and platform #2 (with cue)
+
+```{r}
+plot_pt1<-ggplot(pt1 %>% pivot_longer(cols=c(conditions1), names_to="condition", values_to="count"), aes(x=condition, y=count, fill=condition))+
+  geom_boxplot()+
+  ggtitle("Trail preference in ants with and without prior exposure to visual cue") +theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+plot_pt1
+```
+
+#Box 3. Descriptive statistics for part 1
+In your lab report, write the mean and standard deviation of number of ants in each group observed traveling to each platform (four means and four standard deviations total)
+```{r}
+sum_1<- pt1 %>% pivot_longer(cols=conditions1, names_to="condition", values_to="count") %>% group_by(condition) %>% summarise(mean=mean(count), stdev=sd(count))
+
+sum_1
+```
+
+
+#Box 4. Statistical tests for difference in bridge usage in exposed (marked) ants.
+
+The t-tests performed here will address the following questions (respectively)
+1) Did ants that had the opportunity to learn a visual cue preferentially forage on the bridge with the cue?
+2) Did unmarked ants show a preference for either bridge?
+
+The first result printed below is the t-test for bridge preference in exposed (marked) ants. In this test, x=marked ants crossing the bridge with no visual cue, y=marked ants crossing the bridge with the visual cue
+
+The second result is the t-test for unexposed (unmarked) ants. 
+In this test, x=unmarked ants crossing the bridge with no visual cue, y=unmarked ants crossing the bridge with a visual cue
+
+Note that we expect the presence or absence of a "visual cue" to be irrelevant for these ants since they had no prior exposure to the visual cue. What would it indicate if there was a significant difference in bridge usage for unmarked ants?
+
+
+```{r}
+marked_test1<-t.test(x=pt1$marked.no.visual, y=pt1$marked.visual)
+
+unmarked_test1<-t.test(x=pt1$unmarked.no.visual, y=pt1$unmarked.visual)
+
+marked_test1
+unmarked_test1
+
+```
+
+
+
+###PART 2###
+
+#Box 5. Plot results for part 2
+Note that "marked" ants now includes both green and yellow ants, both of which were exposed to the visual cue, either in part 1 (green) or part 2 (yellow).
+
+Remember, platform 1 had a chemical cue only while platform 2 had a visual cue only.
+
+```{r}
+plot_pt2<-ggplot(pt2 %>% pivot_longer(cols=c(conditions2), names_to="condition", values_to="count"), aes(x=condition, y=count, fill=condition))+
+  geom_boxplot()+
+  ggtitle("Trail usage by ants with and without prior exposure to visual cue")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+plot_pt2
+
+```
+
+#Box 6. Descriptive statistics for part 2
+
+Next we will look at the mean and standard deviation of ants on the trail with the visual cue only and the chemical cue only
+
+```{r}
+sum_2<- pt2 %>% pivot_longer(cols=conditions2, names_to="condition", values_to="count") %>% group_by(condition) %>% summarise(mean=mean(count), stdev=sd(count))
+
+sum_2
+```
+
+#Box 7. Statistical tests for part 2
+
+Here we will again use a t-test to test for differences in bridge usage for both (1) marked and (2) unmarked ants 
+These tests will address the following questions (respectively)
+1) Did ants with prior exposure to a visual cue show a preference for the bridge with the visual, but no chemical, cue or the bridge with a chemical, but no visual, cue?
+
+2)Did ants with no prior exposure to a visual cue show a preference for the bridge without the chemical cue (visual.only) or with the chemical cue (chemical.only)?
+
+```{r}
+marked_test2<-t.test(x=pt2$marked.visual.only, y=pt2$marked.chemical.only)
+
+unmarked_test2<-t.test(x=pt2$unmarked.visual.only, y=pt2$unmarked.chemical.only)
+
+marked_test2
+unmarked_test2
+```
+
+###PART 3###
+
+#Box 8. Plot correct (towards nest) vs. incorrect (towards opposite platform) turns made by ants on trails with different bifurcation angles
+
+```{r}
+
+plot_pt3<- ggplot(pt3 %>% pivot_longer(cols=c(to_nest, to_platform), names_to="direction", values_to="count") %>% group_by(angle), aes(x=direction, y=count, fill=as.factor(angle))) +
+  geom_boxplot() + labs(fill="bifurcation angle", title="Orientation of Argentine ants using different trail geometries")
+
+plot_pt3
+```
+
+
+#Box 9. Descriptive statistics for trail geometry
+
+```{r}
+sum_3<- pt3 %>% pivot_longer(cols=c(to_nest, to_platform), names_to="direction", values_to="count") %>% group_by(angle, direction) %>% summarise(mean=mean(count), stdev=sd(count))
+
+sum_3
+
+```
+
+
+#Box 10. 
+This box will use a t-test to compare the percentage of ants taking the correct path (towards the nest) 
+In the results, x represents the percentage of ants taking the correct path when the bifurcatin was 60 degrees and y represents the percentage of ants taking the correct path when the bifurcation was 120 degrees.
+```{r}
+perc_by_angle<-pt3 %>% group_by(angle) %>% mutate(perc_correct=(to_nest/sum(to_nest, to_platform))*100)
+
+geotest<-t.test(x=perc_by_angle %>% filter(angle==60), y=perc_by_angle %>% filter(angle==120))
+
+geotest
+```
+
