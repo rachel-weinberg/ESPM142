@@ -1,0 +1,150 @@
+---
+title: "L6_analysis"
+author: "Weinberg"
+date: "2022-09-28"
+output: html_document
+---
+#Box 0. Run to load the libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+library(ggplot2)
+```
+
+##Box 1. Import the data
+All analyses will use the class data sheet. Import the data and rename the "Assay" column with short versions of the assay names listed in Table 1 of the lab handout.
+```{r}
+my_sheet<-"https://docs.google.com/spreadsheets/d/18LWXjDetusdewmIdkr60G75vSkLZ9-96Sk3EiJ36uGI/edit?usp=sharing"
+dt<-read_sheet(my_sheet)
+assays<-c(rep("host.history", 2), rep("visual.cues.only", 2), rep("visual.vs.chemical", 2), rep("visual.with.chemical", 2), rep("chemical.parasitized", 2), rep("chemical.conspecific.larva", 2))
+dt$Assay<-rep(assays, nrow(dt)/12)
+item1<-c(rep("Sb_unparasitized", 2), rep("decoy_untreated", 2), rep("decoy_treated_unparasitized", 4), rep("Sb_treated_unparasitized", 4))
+dt$item1<-rep(item1, nrow(dt)/12)
+item2<-c(rep("Sb_parasitized", 2), rep("model_untreated", 4), rep("model_treated_unparasitized", 2), rep("Sb_treated_parasitized", 2), rep("Sb_treated_larvae", 2))
+dt$item2<-rep(item2, nrow(dt)/12)
+dt$total_time_1<-rowSums(dt[,4:5])
+dt$total_time_2<-rowSums(dt[,6:7])
+dt<-dt[complete.cases(dt),]
+```
+
+#Box 2. Look at the data table
+```{r}
+dt
+```
+
+#Box 3. Calculate a preference index for each item
+The preference index (PI) describes the relative usage of a particular item (calculated here as total time spent at the item) compared to its availability in the environment (in a binary choice assay, this is always 50% since each of the two choices comprises 50% of the options). There are many different preference indices in the literature, but for this lab we will use one called Ivlev's Electivity Index (1961)
+
+This preference index ranges from -1 to 1, with negative values indicating avoidance, near-zero values indicating no preference, and positive values indicating a preference.
+
+For this lab, we will consider values between -0.1 and 0.1 to be "no preference"
+```{r}
+preference_index<-function(item1, item2){
+  #ri=relative usage of item 1
+  #pi=expected usage of item 1 given no preference (null hypothesis is that the item would be chosen 50% of the time)
+  ri<-sum(item1)/sum(item1, item2)
+  pi<-0.5
+  E<-(ri-pi)/(ri+pi)
+  ri2<-sum(item2/sum(item1, item2))
+  E2<-(ri2-pi)/(ri2+pi)
+  return(c(E, E2))
+}
+PI1<-preference_index(item1=dt$total_time_1[dt$Assay=="host.history"], item2 = dt$total_time_2[dt$Assay=="host.history"])
+
+PI2<-preference_index(item1=dt$total_time_2[dt$Assay=="host.history"], item2 = dt$total_time_1[dt$Assay=="host.history"])
+
+PI3<-preference_index(item1=dt$total_time_2[dt$Assay=="visual.vs.chemical"], item2 = dt$total_time_1[dt$Assay=="visual.vs.chemical"])
+
+PI4<-preference_index(item1=dt$total_time_2[dt$Assay=="visual.with.chemical"], item2 = dt$total_time_1[dt$Assay=="visual.with.chemical"])
+
+PI5<-preference_index(item1=dt$total_time_2[dt$Assay=="chemical.parasitized"], item2 = dt$total_time_1[dt$Assay=="chemical.parasitized"])
+
+PI6<-preference_index(item1=dt$total_time_2[dt$Assay=="chemical.conspecific.larva"], item2 = dt$total_time_1[dt$Assay=="chemical.conspecific.larva"])
+
+preference_indices_total<-data.frame(assay=unique(dt$Assay), item1=item1[seq(1, length(item1), 2)], item2=item2[seq(1, length(item2), 2)], PI_item1=c(PI1[1], PI2[1], PI3[1], PI4[1], PI5[1], PI6[1]), PI_item2=c(PI1[2], PI2[2], PI3[2], PI4[2], PI5[2], PI6[2]))
+
+preference_indices_total
+
+for(x in 1:nrow(dt)){
+  dt$PI1[x]<-preference_index(dt$total_time_1[x], dt$total_time_2[x])[1]
+  dt$PI2[x]<-preference_index(dt$total_time_1[x], dt$total_time_2[x])[2]
+}
+```
+
+#Box 3A. Plot the preference index
+Give the plot a descriptive title by replacing the text "My plot title" with the title you wish to use. Make sure to keep the title in quotation marks!
+```{r}
+PI_plot_title<-"My plot title"
+PI_plot<-ggplot(data=dt %>% pivot_longer(cols=c(PI1, PI2), names_to="item", values_to = "PI"), aes(x=Assay, y=PI, fill=item)) +geom_boxplot()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ggtitle(PI_plot_title)
+PI_plot
+```
+#Box 4. Test for statistically significant differences in item usage
+Here we are using a chi-square test to see if the difference in item usage deviates from a null expectation (of equal item usage)
+
+```{r}
+chisq.test(x=(abs(dt$total_time_1[dt$Assay=="host.history"]-dt$total_time_2[dt$Assay=="host.history"])))
+
+chisq_table<-data.frame(assay=unique(dt$Assay), p.val=c(
+  chisq.test(x=abs(dt$total_time_1[dt$Assay=="host.history"]-dt$total_time_2[dt$Assay=="host.history"]))$p.value,
+  chisq.test(x=abs(dt$total_time_1[dt$Assay=="visual.cues.only"]-dt$total_time_2[dt$Assay=="visual.cues.only"]))$p.value,
+   chisq.test(x=abs(dt$total_time_1[dt$Assay=="visual.vs.chemical"]-dt$total_time_2[dt$Assay=="visual.vs.chemical"]))$p.value,
+  chisq.test(x=abs(dt$total_time_1[dt$Assay=="visual.with.chemical"]-dt$total_time_2[dt$Assay=="visual.with.chemical"]))$p.value,
+  chisq.test(x=abs(dt$total_time_1[dt$Assay=="chemical.parasitized"]-dt$total_time_2[dt$Assay=="chemical.parasitized"]))$p.value,
+  chisq.test(x=abs(dt$total_time_1[dt$Assay=="chemical.conspecific.larva"]-dt$total_time_2[dt$Assay=="chemical.conspecific.larva"]))$p.value
+))
+
+
+chisq_table
+
+```
+
+
+#Box 5. Plot item usage by assay
+Come up with your own plot titles for this lab! Replace the text "My plot title" with the title you want to give your plot. Make sure to keep the title in quotation marks!
+This plot is optional to include in your lab report but will help with the interpretation of the chi-square statistics above
+```{r}
+plot1_title<-"My plot title"
+plot_total<-ggplot(data = dt %>% group_by(Assay) %>% pivot_longer(cols=c(total_time_1, total_time_2), names_to = "item", values_to = "time"), aes(x=Assay, y=time, fill=item))+geom_col(position="dodge")+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ggtitle(plot1_title)
+
+plot_total
+```
+
+
+#Box 6. Plot individual time spent performing behaviors in each assay
+This plot shows behaviors on each potential host for all the assays. Give it a descriptive title by replacing the text "My plot title" with the title you wish to use. Make sure to keep the title in quotation marks!
+```{r}
+plot2_title<-"My plot title"
+
+plot_individual_behavior<-ggplot(data=dt %>% pivot_longer(cols=c(CAP_1, SOF_1, CAP_2, SOF_2), names_to="behavior_item", values_to = "time"), aes(x=Assay, y=time, color=behavior_item)) + geom_point(position = position_dodge2(width=0.5))+ggtitle(plot2_title)
+
+plot_individual_behavior
+```
+
+#Box 7. Summary statistsics for all assays
+This box will output the mean and standard deviation of the time spent performing each behavior on each item. Refer to table 1 for the hosts coresponding to item 1 and item 2 for each assay. 
+```{r}
+sumstats<-dt %>% group_by(Assay) %>% summarise(mean_SOF_item_1=mean(SOF_1), sd_SOF_item_1=sd(SOF_1), variance_SOF_item_1<-mean_CAP_item_1=mean(CAP_1), sd_CAP_item_1=sd(CAP_1), mean_SOF_item_2<-mean(SOF_2), sd_SOF_item_2=sd(SOF_2), mean_CAP_item_2=mean(CAP_2), sd_CAP_item_2=sd(CAP_2))
+sumstats
+```
+
+
+#Box 8. ANOVA to test for differences in time spent on each host
+ANOVA will be performed for each assay. The following code will output a series of six ANOVA tests, numbered 1-6 to match up with each assay. The value Pr(>F) is the p-value for the test
+```{r}
+dtaov<-dt %>% pivot_longer(cols=c(total_time_1, total_time_2), names_to = "item", values_to = "time")
+
+anova1<-aov(time~item, data=dtaov[dtaov$Assay=="host.history",])
+summary(anova1)
+anova2<-aov(time~item, data=dtaov[dtaov$Assay=="visual.cues.only",])
+summary(anova2)
+anova3<-aov(time~item, data=dtaov[dtaov$Assay=="visual.vs.chemical",])
+summary(anova3)
+anova4<-aov(time~item, data=dtaov[dtaov$Assay=="visual.with.chemical",])
+summary(anova4)
+anova5<-aov(time~item, data=dtaov[dtaov$Assay=="chemical.parasitized",])
+summary(anova5)
+anova6<-aov(time~item, data=dtaov[dtaov$Assay=="chemical.conspecific.larva",])
+summary(anova6)
+
+```
