@@ -64,19 +64,21 @@ PI6<-preference_index(item1=dt$total_time_2[dt$Assay=="chemical.conspecific.larv
 
 preference_indices_total<-data.frame(assay=unique(dt$Assay), item1=item1[seq(1, length(item1), 2)], item2=item2[seq(1, length(item2), 2)], PI_item1=c(PI1[1], PI2[1], PI3[1], PI4[1], PI5[1], PI6[1]), PI_item2=c(PI1[2], PI2[2], PI3[2], PI4[2], PI5[2], PI6[2]))
 
-preference_indices_total
+#for(x in 1:nrow(dt)){
+#  dt$PI1[x]<-preference_index(dt$total_time_1[x], dt$total_time_2[x])[1]
+#  dt$PI2[x]<-preference_index(dt$total_time_1[x], dt$total_time_2[x])[2]
+#}
 
-for(x in 1:nrow(dt)){
-  dt$PI1[x]<-preference_index(dt$total_time_1[x], dt$total_time_2[x])[1]
-  dt$PI2[x]<-preference_index(dt$total_time_1[x], dt$total_time_2[x])[2]
-}
+preference_indices_total
 ```
 
 #Box 3A. Plot the preference index
 Give the plot a descriptive title by replacing the text "My plot title" with the title you wish to use. Make sure to keep the title in quotation marks!
 ```{r}
 PI_plot_title<-"My plot title"
-PI_plot<-ggplot(data=dt %>% pivot_longer(cols=c(PI1, PI2), names_to="item", values_to = "PI"), aes(x=Assay, y=PI, fill=item)) +geom_boxplot()+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ggtitle(PI_plot_title)
+
+
+PI_plot<-ggplot(data=preference_indices_total %>% pivot_longer(cols=c(PI_item1, PI_item2), names_to="item", values_to = "PI"), aes(x=assay, y=PI, fill=item)) +geom_col(position="dodge")+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ggtitle(PI_plot_title)
 PI_plot
 ```
 #Box 4. Test for statistically significant differences in item usage
