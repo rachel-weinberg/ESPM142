@@ -82,7 +82,7 @@ PI_plot<-ggplot(data=preference_indices_total %>% pivot_longer(cols=c(PI_item1, 
 PI_plot
 ```
 #Box 4. Test for statistically significant differences in item usage
-Here we are using a chi-square test to see if the difference in item usage deviates from a null expectation (of equal item usage)
+Here we are using a chi-square test to see if the difference in item usage deviates from a null expectation (of equal item usage).
 
 ```{r}
 chisq.test(x=(abs(dt$total_time_1[dt$Assay=="host.history"]-dt$total_time_2[dt$Assay=="host.history"])))
@@ -126,13 +126,16 @@ plot_individual_behavior
 #Box 7. Summary statistsics for all assays
 This box will output the mean and standard deviation of the time spent performing each behavior on each item. Refer to table 1 for the hosts coresponding to item 1 and item 2 for each assay. 
 ```{r}
-sumstats<-dt %>% group_by(Assay) %>% summarise(mean_SOF_item_1=mean(SOF_1), sd_SOF_item_1=sd(SOF_1), variance_SOF_item_1=mean_CAP_item_1=mean(CAP_1), sd_CAP_item_1=sd(CAP_1), mean_SOF_item_2<-mean(SOF_2), sd_SOF_item_2=sd(SOF_2), mean_CAP_item_2=mean(CAP_2), sd_CAP_item_2=sd(CAP_2))
+sumstats<-dt %>% group_by(Assay) %>% summarise(mean_SOF_item_1=mean(SOF_1), sd_SOF_item_1=sd(SOF_1), mean_CAP_item_1=mean(CAP_1), sd_CAP_item_1=sd(CAP_1), mean_SOF_item_2=mean(SOF_2), sd_SOF_item_2=sd(SOF_2), mean_CAP_item_2=mean(CAP_2), sd_CAP_item_2=sd(CAP_2))
 sumstats
 ```
 
 
 #Box 8. ANOVA to test for differences in time spent on each host
-ANOVA will be performed for each assay. The following code will output a series of six ANOVA tests, numbered 1-6 to match up with each assay. The value Pr(>F) is the p-value for the test
+ANOVA will be performed for each assay. The following code will output a series of six ANOVA tests, numbered 1-6 to match up with each assay. The value Pr(>F) is the p-value for the test.
+
+This test is different from the chi-squared test in that, instead of looking at whether the DIFFERNCE in time spent on each deviates from a null expectation (which is what the chi-squared test tells you, in this case whether a preference exists), it tests whether the means between two samples are significantly different from one another. This test is useful if you have a data set with lots of individuals who may vary in their item usage, because it tells you if the average behaviors in each sample are significantly different from each other.
+
 ```{r}
 dtaov<-dt %>% pivot_longer(cols=c(total_time_1, total_time_2), names_to = "item", values_to = "time")
 
