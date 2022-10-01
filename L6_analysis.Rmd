@@ -127,6 +127,7 @@ plot_individual_behavior
 This box will output the mean and standard deviation of the time spent performing each behavior on each item. Refer to table 1 for the hosts coresponding to item 1 and item 2 for each assay. 
 ```{r}
 sumstats<-dt %>% group_by(Assay) %>% summarise(mean_SOF_item_1=mean(SOF_1), sd_SOF_item_1=sd(SOF_1), mean_CAP_item_1=mean(CAP_1), sd_CAP_item_1=sd(CAP_1), mean_SOF_item_2=mean(SOF_2), sd_SOF_item_2=sd(SOF_2), mean_CAP_item_2=mean(CAP_2), sd_CAP_item_2=sd(CAP_2))
+
 sumstats
 ```
 
