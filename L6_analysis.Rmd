@@ -118,7 +118,7 @@ This plot shows behaviors on each potential host for all the assays. Give it a d
 ```{r}
 plot2_title<-"My plot title"
 
-plot_individual_behavior<-ggplot(data=dt %>% pivot_longer(cols=c(CAP_1, SOF_1, CAP_2, SOF_2), names_to="behavior_item", values_to = "time"), aes(x=Assay, y=time, color=behavior_item)) + geom_point(position = position_dodge2(width=0.5))+ggtitle(plot2_title)
+plot_individual_behavior<-ggplot(data=dt %>% pivot_longer(cols=c(CAP_1, SOF_1, CAP_2, SOF_2), names_to="behavior_item", values_to = "time"), aes(x=Assay, y=time, color=behavior_item)) + geom_point(position = position_dodge2(width=0.5))+ggtitle(plot2_title)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 plot_individual_behavior
 ```
