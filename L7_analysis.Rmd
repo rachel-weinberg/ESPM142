@@ -1,0 +1,101 @@
+---
+title: "L7_analysis"
+author: "Weinberg"
+date: "2022-10-03"
+output: html_document
+---
+#Box 0. Load the libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+library(ggplot2)
+```
+
+#Box 1. Import the data
+```{r import}
+my_sheet<-"https://docs.google.com/spreadsheets/d/1x8OdxIco5LdxMfYlgT2mrenRzkFJmwlNEZhVPd1vKss/edit?usp=sharing"
+dt<-read_sheet(my_sheet)
+colnames(dt)<-c("student_names", "colony", "hour_bridge", "hour_ant", "time_first_ant", "hour_queen", "time_first_queen", "hour_brood", "time_first_brood", "crossing_1-2", "crossing_3-4", "crossing_stream")
+```
+
+#Box 2. View the summary statistics of the time it took for ants of each type to move over the bridge 
+Note that there is a separate value for each colony!
+```{r}
+
+dt_times<-dt[,c("colony", "time_first_ant", "time_first_queen", "time_first_brood")]
+
+dt_time_summary<- dt_times %>% group_by(colony) %>% summarise(firstworker_mean=mean(time_first_ant), firstworker_sd=sd(time_first_ant), firstqueen_mean=mean(time_first_queen), firstqueen_sd=sd(time_first_queen), firstbrood_mean=mean(time_first_brood), firstbrood_sd=sd(time_first_brood)) %>% pivot_longer(-colony, names_to=c("type", ".value"), names_sep="_")
+
+dt_time_summary
+```
+
+#Box 3. Plot time to first ant of each type crossing 
+This will plot the mean and standard deviation of the time it took from bridge placement to the first crossing of each ant type: workers, queens, and brood.
+
+Give the plot a descriptive title by replacing the text "My plot title" with the title you wish to use. Make sure to keep the title in quotation marks!
+```{r}
+plot_title_first_ant<-"My plot title"
+plot_ant1<-ggplot(data=dt_time_summary, aes(type, y=mean, fill=colony))+ 
+  geom_col(position=position_dodge())+labs(title=plot_title_first_ant, x="time to first crossing", y="colony ID") + geom_errorbar(aes(x=type, ymin=mean-sd, ymax=mean+sd), size=0.5, position=position_dodge())
+
+plot_ant1
+```
+
+
+
+#Box 4. View summary statistics for the rate of ant crossing by each flow rate
+```{r}
+dt_flow<-dt[,c("colony", "crossing_1-2", "crossing_3-4", "crossing_stream")]
+
+dt_flow_summary<- dt_flow %>% group_by(colony) %>% summarise(low_mean=mean(`crossing_1-2`), low_sd = sd(`crossing_1-2`), med_mean=mean(`crossing_3-4`), med_sd=sd(`crossing_3-4`), high_mean=mean(crossing_stream), high_sd=sd(crossing_stream)) %>% pivot_longer(-colony, names_to=c("flowrate", ".value"), names_sep="_")
+
+dt_flow_summary
+```
+
+#Box 5. Plot rate of crossing at each flow rate by colony
+As in the plot above, this code will generate a plot showing the mean and standard deviation of the crossing rate for each colony at each of the different flow rates. Give each plot a descriptive title by replacing "My plot title" in the first and second line. The first plot (enter title in line 62) will display crossing rates separately for each colony and the second plot (enter title in line 63) will display the mean crossing rate for both colonies at each flow rate.
+
+The second plot shows the mean rate of crossing for ants from both colonies at each of the flow rates.
+
+```{r}
+plot_title_bycol<-"My plot title"
+plot_title_total<-"My plot title"
+
+plot_rate_bar<-ggplot(data=dt_flow_summary, aes(x=flowrate, y=mean, fill=colony))+ 
+  geom_col(position=position_dodge())+labs(title=plot_title_bycol, x="flow rate", y="ants crossing per minute") + geom_errorbar(aes(x=flowrate, ymin=mean-sd, ymax=mean+sd), size=0.5, position=position_dodge())
+
+ plot_rate_bar
+ 
+
+plot_rate_box<-ggplot(data=dt_flow_summary, aes(x=factor(flowrate, levels=c("low", "med", "high")), y=mean))+ 
+  geom_boxplot()+labs(title=plot_title_total, x="flow rate", y="ants crossing per minute")
+
+plot_rate_box
+```
+
+
+#Box 6. Calculate ANOVA to test for significant differences between colonies in the time to first worker, queen, and brood crossing the bridge
+The first result (anova_fw) is the ANOVA for time to first worker, the second (anova_fq) is for the time to first queen, and the third (anova_fb) is for the time to first brood
+```{r}
+anova_fw<-aov(time_first_ant~colony, data = dt)
+anova_fq<-aov(time_first_queen~colony, data=dt)
+anova_fb<-aov(time_first_brood~colony, data=dt)
+
+summary(anova_fw)
+summary(anova_fq)
+summary(anova_fb)
+```
+
+#Box 7. Calculate ANOVA for the rate of ants crossing at each flow rate per colony
+The first ANOVA printed is for the low flow (1-2 drips/second), the second is for medium flow (3-4 drips/second), and the third is for high flow (light stream)
+```{r}
+anova_lowflow<-aov(`crossing_1-2`~colony, data=dt)
+anova_medflow<-aov(`crossing_3-4`~colony, data=dt)
+anova_highflow<-aov(crossing_stream~colony, data=dt)
+
+summary(anova_lowflow)
+summary(anova_medflow)
+summary(anova_highflow)
+```
+
