@@ -15,27 +15,35 @@ library(ggplot2)
 #Box 1. Import the data
 ```{r import}
 my_sheet<-"https://docs.google.com/spreadsheets/d/1x8OdxIco5LdxMfYlgT2mrenRzkFJmwlNEZhVPd1vKss/edit?usp=sharing"
-dt<-read_sheet(my_sheet)
+dt<-read_sheet(my_sheet, col_types = "cccciciciiii")
 colnames(dt)<-c("student_names", "colony", "hour_bridge", "hour_ant", "time_first_ant", "hour_queen", "time_first_queen", "hour_brood", "time_first_brood", "crossing_1-2", "crossing_3-4", "crossing_stream")
 ```
 
-#Box 2. View the summary statistics of the time it took for ants of each type to move over the bridge 
-Note that there is a separate value for each colony!
+#Box 2. View the summary statistics of the time it took for ants of each type from each colony to move over the bridge 
+Note that there is a separate value for each ant type in colony!
+The first table that shows up will report these statistics over the entire data set and the second one breaks them up by colony.
+
+The standard deviation for time to first brood in the CK colony and time to first queen in the UCB colony shows up as "NA" because there was only one value in those categories (only one CK colony moved brood and only one UCB colony moved a queen)
 ```{r}
 
 dt_times<-dt[,c("colony", "time_first_ant", "time_first_queen", "time_first_brood")]
 
-dt_time_summary<- dt_times %>% group_by(colony) %>% summarise(firstworker_mean=mean(time_first_ant), firstworker_sd=sd(time_first_ant), firstqueen_mean=mean(time_first_queen), firstqueen_sd=sd(time_first_queen), firstbrood_mean=mean(time_first_brood), firstbrood_sd=sd(time_first_brood)) %>% pivot_longer(-colony, names_to=c("type", ".value"), names_sep="_")
+dt_tsum_tot<-dt_times %>% summarise_at(c("time_first_ant", "time_first_queen", "time_first_brood"), list(mean,sd), na.rm=TRUE)
+colnames(dt_tsum_tot)<-c("firstant.mean", "firstqueen.mean", "firstbrood.mean", "firstant.sd", "firstqueen.sd", "firstbrood.sd")
 
+dt_time_summary<- dt_times %>% group_by(colony) %>% summarise(firstworker_mean=mean(time_first_ant), firstworker_sd=sd(time_first_ant), firstqueen_mean=mean(time_first_queen[!is.na(time_first_queen)]), firstqueen_sd=sd(time_first_queen[!is.na(time_first_queen)]), firstbrood_mean=mean(time_first_brood[!is.na(time_first_brood)]), firstbrood_sd=sd(time_first_brood[!is.na(time_first_brood)])) %>% pivot_longer(-colony, names_to=c("type", ".value"), names_sep="_")
+
+dt_tsum_tot
 dt_time_summary
 ```
 
 #Box 3. Plot time to first ant of each type crossing 
-This will plot the mean and standard deviation of the time it took from bridge placement to the first crossing of each ant type: workers, queens, and brood.
+This will plot the mean and standard deviation of the time it took from bridge placement to the first crossing of each ant type: workers, queens, and brood. the height of the bars represents the mean and the error bars show the standard deviation.
 
 Give the plot a descriptive title by replacing the text "My plot title" with the title you wish to use. Make sure to keep the title in quotation marks!
 ```{r}
 plot_title_first_ant<-"My plot title"
+
 plot_ant1<-ggplot(data=dt_time_summary, aes(type, y=mean, fill=colony))+ 
   geom_col(position=position_dodge())+labs(title=plot_title_first_ant, x="time to first crossing", y="colony ID") + geom_errorbar(aes(x=type, ymin=mean-sd, ymax=mean+sd), size=0.5, position=position_dodge())
 
@@ -54,7 +62,7 @@ dt_flow_summary
 ```
 
 #Box 5. Plot rate of crossing at each flow rate by colony
-As in the plot above, this code will generate a plot showing the mean and standard deviation of the crossing rate for each colony at each of the different flow rates. Give each plot a descriptive title by replacing "My plot title" in the first and second line. The first plot (enter title in line 62) will display crossing rates separately for each colony and the second plot (enter title in line 63) will display the mean crossing rate for both colonies at each flow rate.
+As in the plot above, this code will generate a plot showing the mean and standard deviation of the crossing rate for each colony at each of the different flow rates. Give each plot a descriptive title by replacing "My plot title" in the first and second line. The first plot (enter title in line 70) will display crossing rates separately for each colony and the second plot (enter title in line 71) will display the mean crossing rate for both colonies at each flow rate. Note that the error bar showing a negative value for the Clark Kerr "low" crossing just reflects that the standard deviation was greater than the mean for this group (we did not record a negative number of ants crossing)
 
 The second plot shows the mean rate of crossing for ants from both colonies at each of the flow rates.
 
@@ -62,7 +70,7 @@ The second plot shows the mean rate of crossing for ants from both colonies at e
 plot_title_bycol<-"My plot title"
 plot_title_total<-"My plot title"
 
-plot_rate_bar<-ggplot(data=dt_flow_summary, aes(x=flowrate, y=mean, fill=colony))+ 
+plot_rate_bar<-ggplot(data=dt_flow_summary, aes(x=factor(flowrate, levels=c("low", "med", "high")), y=mean, fill=colony))+ 
   geom_col(position=position_dodge())+labs(title=plot_title_bycol, x="flow rate", y="ants crossing per minute") + geom_errorbar(aes(x=flowrate, ymin=mean-sd, ymax=mean+sd), size=0.5, position=position_dodge())
 
  plot_rate_bar
@@ -76,14 +84,14 @@ plot_rate_box
 
 
 #Box 6. Calculate ANOVA to test for significant differences between colonies in the time to first worker, queen, and brood crossing the bridge
-The first result (anova_fw) is the ANOVA for time to first worker, the second (anova_fq) is for the time to first queen, and the third (anova_fb) is for the time to first brood
+The first result (anova_fw) is the ANOVA for time to first worker and the second (anova_fb) is for the time to first brood. We cannot perform an ANOVA for the time to first queen because we only had observations for one colony (CK).
 ```{r}
 anova_fw<-aov(time_first_ant~colony, data = dt)
-anova_fq<-aov(time_first_queen~colony, data=dt)
+#anova_fq<-aov(time_first_queen~colony, data=dt)
 anova_fb<-aov(time_first_brood~colony, data=dt)
 
 summary(anova_fw)
-summary(anova_fq)
+#summary(anova_fq)
 summary(anova_fb)
 ```
 
@@ -98,4 +106,3 @@ summary(anova_lowflow)
 summary(anova_medflow)
 summary(anova_highflow)
 ```
-
