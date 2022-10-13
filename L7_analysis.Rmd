@@ -45,7 +45,7 @@ Give the plot a descriptive title by replacing the text "My plot title" with the
 plot_title_first_ant<-"My plot title"
 
 plot_ant1<-ggplot(data=dt_time_summary, aes(type, y=mean, fill=colony))+ 
-  geom_col(position=position_dodge())+labs(title=plot_title_first_ant, x="time to first crossing", y="colony ID") + geom_errorbar(aes(x=type, ymin=mean-sd, ymax=mean+sd), size=0.5, position=position_dodge())
+  geom_col(position=position_dodge())+labs(title=plot_title_first_ant, x="time to first crossing", y="time to crossing") + geom_errorbar(aes(x=type, ymin=mean-sd, ymax=mean+sd), size=0.5, position=position_dodge())
 
 plot_ant1
 ```
