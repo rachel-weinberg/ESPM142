@@ -26,7 +26,7 @@ Statistical tests:
 
 -Differences in 1) arrival to and 2) emigration from small and large harborages. 
 
-
+#Box 1
 Note that there is no statistical test provided for other harborage features you may have examined, since these will be different for each group. You may choose to analyze this separately but it will not be required for the lab report.
 ```{r}
 mysheet<-"https://docs.google.com/spreadsheets/d/1GSgi-jBv8OImmX6JCVqY3WNV2TwNjgGNEsVueEph810/edit?usp=sharing"
@@ -34,14 +34,20 @@ dat_size<-read_sheet(mysheet, sheet="class data: harborage size")
 dat_disp<-read_sheet(mysheet, sheet="class data: dispersal events (week 2 only)")
 dispersal_summary<-read_sheet(mysheet, sheet="class data (summary)")
 #rachel complete this
-colnames(dat_disp)<-c("group", "from_to", "distance", "sex", "number")
-gsub(r"{\s*\([^\)]+\)}","",as.character(dat_disp$from_to))
+colnames(dat_disp)<-c("group", "from_to", "distance", "number", "sex")
+
+dat_disp$from_to<-gsub(r"{\s*\([^\)]+\)}","",as.character(dat_disp$from_to))
+
 colnames(dat_size)<-c("group", "harborage_size", "n.males_week1", "n.females_week1", "n.total_week1", "n.males_week2", "n.females_week2", "n.total_week2")
 
-gsub(r"{\s*\([^\)]+\)}","",as.character(dat_size$harborage_size))
+dat_size$harborage_size<-gsub(r"{\s*\([^\)]+\)}","",as.character(dat_size$harborage_size))
 
 dat_disp<-na.omit(dat_disp)
+
 dispersal_summary<-na.omit(dispersal_summary)
+dat_disp
+dat_size
+dispersal_summary
 ```
 
 
@@ -166,7 +172,7 @@ disp_title<-"my plot title"
 disp_sex<-dispersal_summary %>% summarise(mean_males=mean(prop_dispersed[sex=="M"]), mean_females=mean(prop_dispersed[sex=="F"]), se_males=se(prop_dispersed[sex=="M"]), se_females=se(prop_dispersed[sex=="F"])) %>% pivot_longer(everything(), names_to=c(".value", "sex"), names_sep="_")
 
 disp_plot<-ggplot(data=disp_sex, aes(x=sex, y=mean, fill=sex))+
-  geom_col(position = "dodge")+labs(title=total_occupancy_title, x="sex", y="dispersal frequency")+geom_errorbar(aes(x=sex, ymin=mean-se, ymax=mean+se), size=0.5, position=position_dodge())+scale_fill_manual(values=c("#999999", "#E69F00"))
+  geom_col(position = "dodge")+labs(title=disp_title, x="sex", y="dispersal frequency")+geom_errorbar(aes(x=sex, ymin=mean-se, ymax=mean+se), size=0.5, position=position_dodge())+scale_fill_manual(values=c("#999999", "#E69F00"))
 
 disp_plot
 ```
@@ -201,7 +207,7 @@ Replace the text "my plot title" with a descriptive name for this plot.
 ```{r}
 plot3<-"my plot title"
 
-dispersal_dist_lm<-lm(distance~number, data=dat_disp)
+dispersal_dist_lm<-lm(as.numeric(distance)~number, data=dat_disp)
 summary(dispersal_dist_lm)
 
 plot_distance<-ggplot(data=dat_disp, aes(x=distance, y=number))+ geom_point()+ geom_smooth(method="lm")+ggtitle(plot3)
