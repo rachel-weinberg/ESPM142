@@ -80,7 +80,7 @@ Replace "my plot title" in the first line below with the title you would like to
 plot3<-"my plot title"
 
 plot_instar<-ggplot(data = dat %>% mutate(ID=row_number()), aes(x=ID, y=result))+
-  geom_point(aes(shape=instar, color=sex))+labs(title=plot2)
+  geom_point(aes(shape=instar, color=sex))+labs(title=plot3)
 
 plot_instar
 ```
